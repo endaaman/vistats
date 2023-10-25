@@ -6,7 +6,7 @@ from matplotlib import cbook
 
 def boxplot_annotate_brackets(
     tuples: List[Tuple[int, int, str]], x: np.ndarray,
-    dh=.05, barh=.05, text_dh=0.01, fs=None, ax=None,
+    dh=.05, barh=.05, text_dh=0.01, fs=None, margin=0, color='black', ax=None,
     **boxplotkwargs
     ):
     """Annotate boxplot
@@ -32,12 +32,12 @@ def boxplot_annotate_brackets(
     )
 
 
-def annotate_brackets(tuples: List[Tuple[int, int, str]], center: np.ndarray, 
-                      height: np.ndarray, yerr: np.ndarray=None, dh=.05, 
-                      barh=.05, text_dh=0.01, fs=None, ax=None):
-    """ 
+def annotate_brackets(tuples: List[Tuple[int, int, str]], center: np.ndarray,
+                      height: np.ndarray, yerr: np.ndarray=None, dh=.05, margin=0.0,
+                      barh=.05, text_dh=0.01, fs=None, color='black', ax=None):
+    """
     Annotate plot with brackets and texts.
-  
+
     :param tuples: list of tuples including (idx1, idx2, text)
         :param idx1: number of left bar to put bracket over
         :param idx2: number of right bar to put bracket over
@@ -52,7 +52,7 @@ def annotate_brackets(tuples: List[Tuple[int, int, str]], center: np.ndarray,
     """
 
     ax = ax if ax is not None else plt
-    
+
     # sorting tuples by the first element of each tuple.
     sorted_values = [idx1 for idx1, _, _ in tuples]
     sorted_tuple_idxes = np.argsort(sorted_values)
@@ -60,8 +60,10 @@ def annotate_brackets(tuples: List[Tuple[int, int, str]], center: np.ndarray,
     max_y = 0
     # get font size.
     fs = fs if fs is not None else plt.rcParams["font.size"]
-    # pt to px (1px = 0.75pt = 3/4pt)
-    fspx = fs * 4 / 3
+    # pt to inch (1pt = 1/72 inch)
+    fsinch = fs / 72
+    # inch to pixel
+    fspx = fsinch * plt.rcParams["figure.dpi"]
 
     # decide a margin over bar+yerr, a height of bar, a margin of text.
     origin_ax_min_y, origin_ax_max_y = plt.gca().get_ylim()
@@ -69,16 +71,12 @@ def annotate_brackets(tuples: List[Tuple[int, int, str]], center: np.ndarray,
     fixed_barh = barh * (origin_ax_max_y - origin_ax_min_y)
     fixed_text_dh = text_dh * (origin_ax_max_y - origin_ax_min_y)
 
-    # dot per pixel. pixel is assumed to be 1/96 of an inch
-    dpp = plt.rcParams["figure.dpi"] / 96
-
     # estimate height
     # Note that the current axes will make large as the following process adds bars
     # These commands estimate the maximum y of the y-axis.
     p_miny, p_maxy = plt.gca().get_window_extent().get_points()[:, 1]
     # transform 1 dot per pixel
-    p_miny, p_maxy = p_miny / dpp, p_maxy / dpp
-    font_height = fspx * (origin_ax_max_y - origin_ax_min_y) / (p_maxy - p_miny)
+    font_height =  (origin_ax_max_y - origin_ax_min_y) * fspx / (p_maxy - p_miny)
 
     # Repeating 5 times empirically makes the loss less than 1.
     for _ in range(5):
@@ -91,33 +89,33 @@ def annotate_brackets(tuples: List[Tuple[int, int, str]], center: np.ndarray,
     for tuple_idx  in sorted_tuple_idxes:
         idx1, idx2, text = tuples[tuple_idx]
 
-        lx, ly = center[idx1], height[idx1] 
-        rx, ry = center[idx2], height[idx2] 
+        lx, ly = center[idx1], height[idx1]
+        rx, ry = center[idx2], height[idx2]
 
         if yerr:
             ly += yerr[idx1]
             ry += yerr[idx2]
-    
+
         base_y = max(ly, ry) + fixed_dh
         # bar + yerr / max_y plus the text with its margins.
-        y = max(base_y, max_y + fixed_barh + fixed_text_dh + font_height + fixed_text_dh)
+        y = max(base_y, max_y + fixed_barh + fixed_text_dh + font_height + fixed_text_dh + margin)
 
         if max_y < y:
             max_y = y
-    
+
         barx = [lx, lx, rx, rx]
         bary = [y, y+fixed_barh, y+fixed_barh, y]
         mid = ((lx+rx)/2, y + fixed_barh + fixed_text_dh)
-    
-        ax.plot(barx, bary, c='black')
-    
+
+        ax.plot(barx, bary, c=color)
+
         kwargs = dict(ha='center', va='bottom')
         if fs is not None:
             kwargs['fontsize'] = fs
-    
-        kwargs['color'] = "black"
+
+        kwargs['color'] = color
         ax.text(*mid, text, **kwargs)
-        
+
         counter_idx[idx1] += 1
         counter_idx[idx2] += 1
 
