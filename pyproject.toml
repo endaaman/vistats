@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vistats"
-version = "0.2.0"
+version = "0.2.1"
 description = "package of visualization for statistical tests."
 authors = ["takato86 <okudo@nii.ac.jp>"]
 readme = "README.md"
@@ -9,12 +9,12 @@ repository = "https://github.com/takato86/vistats"
 
 [tool.poetry.dependencies]
 python = ">=3.9"
-pandas = "^1.5.2"
-numpy = "^1.23.5"
-matplotlib = "^3.6.2"
-ipykernel = "^6.17.1"
-scipy = "^1.9.3"
-seaborn = "^0.12.1"
+pandas = "*"
+numpy = "*"
+matplotlib = "*"
+ipykernel = "*"
+scipy = "*"
+seaborn = "*"
 
 
 [build-system]
